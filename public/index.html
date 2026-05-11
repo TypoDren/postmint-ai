@@ -8,17 +8,61 @@
   </head>
   <body>
     <main class="shell">
-      <section class="topbar">
-        <div class="brand">
-          <span class="brand-mark">PM</span>
-          <div>
-            <h1>PostMint AI</h1>
-            <p>Продающие Telegram-посты за 30 секунд. Оплата в TON.</p>
+      <section class="hero">
+        <nav class="topbar">
+          <div class="brand">
+            <span class="brand-mark">PM</span>
+            <div>
+              <strong>PostMint AI</strong>
+              <span>Telegram sales writer</span>
+            </div>
           </div>
-        </div>
-        <div class="credits">
-          <span>Генерации</span>
-          <strong id="creditsCount">...</strong>
+          <div class="credits">
+            <span>Генерации</span>
+            <strong id="creditsCount">...</strong>
+          </div>
+        </nav>
+
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <span class="badge">AI-посты для Telegram и TON-проектов</span>
+            <h1>Продающий пост для канала за 30 секунд</h1>
+            <p>
+              Введи продукт, аудиторию и тон общения. PostMint соберет заголовок,
+              основной текст, призыв к действию и хештеги без долгого брифинга.
+            </p>
+            <div class="hero-actions">
+              <a href="#generator" class="primary-link">Попробовать бесплатно</a>
+              <button type="button" id="heroBuyButton">Купить пакет</button>
+            </div>
+            <div class="metrics">
+              <div><strong>1</strong><span>пост бесплатно</span></div>
+              <div><strong id="metricPack">10</strong><span>постов в пакете</span></div>
+              <div><strong id="metricPrice">0.1</strong><span>TON за пакет</span></div>
+            </div>
+          </div>
+
+          <div class="hero-preview" aria-label="Пример результата">
+            <div class="preview-window">
+              <div class="preview-bar">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="preview-content">
+                <span class="eyebrow">Пример поста</span>
+                <h2>Как быстро объяснить ценность продукта</h2>
+                <p>
+                  Если подписчик не понимает пользу с первых строк, он пролистывает.
+                  PostMint превращает оффер в понятный Telegram-пост: проблема,
+                  решение, выгода и следующий шаг.
+                </p>
+                <div class="preview-tags">
+                  <span>#telegram</span>
+                  <span>#ton</span>
+                  <span>#sales</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -31,8 +75,33 @@
         <button type="button" id="buyButton">Купить через TON</button>
       </section>
 
-      <section class="workspace">
+      <section class="section">
+        <div class="section-head">
+          <span class="eyebrow">Быстрый старт</span>
+          <h2>Выбери сценарий или заполни вручную</h2>
+        </div>
+        <div class="template-grid">
+          <button type="button" class="template-card" data-template="channel">
+            <strong>Платный канал</strong>
+            <span>Пост для продажи подписки, клуба или закрытого чата.</span>
+          </button>
+          <button type="button" class="template-card" data-template="miniapp">
+            <strong>TON mini app</strong>
+            <span>Анонс приложения, функции, токена или платного доступа.</span>
+          </button>
+          <button type="button" class="template-card" data-template="course">
+            <strong>Мини-курс</strong>
+            <span>Продажа гайда, консультации, обучения или чеклиста.</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="workspace" id="generator">
         <div class="panel form-panel">
+          <div class="panel-head">
+            <span class="eyebrow">Генератор</span>
+            <h2>Опиши оффер</h2>
+          </div>
           <form id="generatorForm">
             <label>
               Ниша
@@ -87,6 +156,48 @@
 
           <pre id="result">Заполни форму и нажми «Сгенерировать пост».</pre>
           <p id="status" class="status"></p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <span class="eyebrow">Почему удобно</span>
+          <h2>Не заменяет маркетолога, но ускоряет первый черновик</h2>
+        </div>
+        <div class="benefit-grid">
+          <article>
+            <strong>Структура вместо хаоса</strong>
+            <p>Заголовок, пост, CTA и хештеги сразу в одном ответе.</p>
+          </article>
+          <article>
+            <strong>Подходит для Telegram</strong>
+            <p>Тексты короткие, прямые и без длинных лендинговых блоков.</p>
+          </article>
+          <article>
+            <strong>Оплата в TON</strong>
+            <p>Пакет генераций покупается прямо через криптокошелек.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <span class="eyebrow">Демо-отзывы</span>
+          <h2>Примеры того, как пользователи могут описывать пользу</h2>
+        </div>
+        <div class="review-grid">
+          <article>
+            <p>«Собрал анонс платного канала за пару минут. Дальше только поправил факты и отправил в отложку.»</p>
+            <span>Владелец Telegram-канала</span>
+          </article>
+          <article>
+            <p>«Удобно быстро проверить несколько углов подачи: деловой, дружелюбный и более смелый вариант.»</p>
+            <span>Автор mini app</span>
+          </article>
+          <article>
+            <p>«Не нужно начинать с пустого листа. Есть скелет поста, CTA и хештеги, которые можно допилить.»</p>
+            <span>Маркетолог проекта</span>
+          </article>
         </div>
       </section>
     </main>

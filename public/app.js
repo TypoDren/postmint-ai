@@ -4,9 +4,12 @@ const status = document.querySelector("#status");
 const button = document.querySelector("#generateButton");
 const copyButton = document.querySelector("#copyButton");
 const buyButton = document.querySelector("#buyButton");
+const heroBuyButton = document.querySelector("#heroBuyButton");
 const creditsCount = document.querySelector("#creditsCount");
 const packGenerations = document.querySelector("#packGenerations");
 const packPrice = document.querySelector("#packPrice");
+const metricPack = document.querySelector("#metricPack");
+const metricPrice = document.querySelector("#metricPrice");
 const pricingBlock = document.querySelector("#pricingBlock");
 const paymentDialog = document.querySelector("#paymentDialog");
 const closePayment = document.querySelector("#closePayment");
@@ -18,6 +21,30 @@ const paymentStatus = document.querySelector("#paymentStatus");
 
 let token = localStorage.getItem("postmint_session");
 let activeOrder = null;
+
+const templates = {
+  channel: {
+    niche: "Платный Telegram-канал",
+    offer: "закрытый канал с готовыми идеями постов и разбором офферов за 0.1 TON",
+    audience: "владельцы небольших Telegram-каналов и эксперты",
+    tone: "деловой",
+    platform: "Telegram"
+  },
+  miniapp: {
+    niche: "TON mini app",
+    offer: "мини-приложение, которое генерирует продающие Telegram-посты и принимает оплату в TON",
+    audience: "создатели TON-проектов, каналов и mini app",
+    tone: "дружелюбный",
+    platform: "Telegram Mini App"
+  },
+  course: {
+    niche: "Мини-курс",
+    offer: "короткий практический гайд с шаблонами для запуска первого платного продукта",
+    audience: "новички, которые хотят быстро упаковать свою идею",
+    tone: "премиальный",
+    platform: "Telegram"
+  }
+};
 
 async function postJson(url, payload) {
   const response = await fetch(url, {
@@ -40,6 +67,8 @@ function updateCredits(credits) {
 function updateConfig(config) {
   packGenerations.textContent = config.generationsPerPayment;
   packPrice.textContent = config.priceTon;
+  metricPack.textContent = config.generationsPerPayment;
+  metricPrice.textContent = config.priceTon;
 
   if (!config.paidEnabled) {
     buyButton.disabled = true;
@@ -63,6 +92,40 @@ async function initSession() {
   updateCredits(session.credits);
   updateConfig(session.config);
 }
+
+function fillTemplate(name) {
+  const template = templates[name];
+  if (!template) {
+    return;
+  }
+
+  for (const [field, value] of Object.entries(template)) {
+    const input = form.elements[field];
+    if (input) {
+      input.value = value;
+    }
+  }
+
+  document.querySelector("#generator").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function openPaymentDialog() {
+  paymentStatus.textContent = "";
+
+  try {
+    activeOrder = await postJson("/api/order", { token });
+    paymentAmount.textContent = activeOrder.amountTon;
+    paymentComment.textContent = activeOrder.comment;
+    paymentLink.href = activeOrder.paymentUrl;
+    paymentDialog.showModal();
+  } catch (error) {
+    status.textContent = error.message;
+  }
+}
+
+document.querySelectorAll("[data-template]").forEach((templateButton) => {
+  templateButton.addEventListener("click", () => fillTemplate(templateButton.dataset.template));
+});
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -88,19 +151,8 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-buyButton.addEventListener("click", async () => {
-  paymentStatus.textContent = "";
-
-  try {
-    activeOrder = await postJson("/api/order", { token });
-    paymentAmount.textContent = activeOrder.amountTon;
-    paymentComment.textContent = activeOrder.comment;
-    paymentLink.href = activeOrder.paymentUrl;
-    paymentDialog.showModal();
-  } catch (error) {
-    status.textContent = error.message;
-  }
-});
+buyButton.addEventListener("click", openPaymentDialog);
+heroBuyButton.addEventListener("click", openPaymentDialog);
 
 verifyButton.addEventListener("click", async () => {
   if (!activeOrder) {
