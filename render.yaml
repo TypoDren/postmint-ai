@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: postmint-ai
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.2
+      - key: AI_PROVIDER
+        value: openrouter
+      - key: OPENROUTER_MODEL
+        value: openrouter/free
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: MERCHANT_TON_ADDRESS
+        sync: false
+      - key: PRICE_TON
+        value: "0.1"
+      - key: GENERATIONS_PER_PAYMENT
+        value: "10"
+      - key: FREE_GENERATIONS
+        value: "1"
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: TONAPI_KEY
+        sync: false
