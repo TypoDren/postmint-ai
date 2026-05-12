@@ -24,8 +24,11 @@ const priceTon = String(process.env.PRICE_TON || "0.1").trim();
 const generationsPerPayment = Number(process.env.GENERATIONS_PER_PAYMENT || 10);
 const freeGenerations = Number(process.env.FREE_GENERATIONS || 1);
 const publicBaseUrl = String(process.env.PUBLIC_BASE_URL || `http://localhost:${port}`).replace(/\/$/, "");
+const telegramBotToken = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
+const telegramWebhookSecret = String(process.env.TELEGRAM_WEBHOOK_SECRET || "").trim();
 const sessions = new Map();
 const orders = new Map();
+const botUsers = new Map();
 const storePath = join(root, "data", "store.json");
 
 try {
@@ -35,6 +38,9 @@ try {
   }
   for (const order of saved.orders || []) {
     orders.set(order.id, order);
+  }
+  for (const user of saved.botUsers || []) {
+    botUsers.set(String(user.chatId), user);
   }
 } catch {
 }
@@ -106,7 +112,8 @@ async function saveStore() {
     await mkdir(join(root, "data"), { recursive: true });
     await writeFile(storePath, JSON.stringify({
       sessions: [...sessions.values()],
-      orders: [...orders.values()]
+      orders: [...orders.values()],
+      botUsers: [...botUsers.values()]
     }, null, 2));
   } catch (error) {
     console.error(`Failed to save store: ${error.message}`);
@@ -217,7 +224,7 @@ async function generateOpenRouter(input) {
   }
 
   const preferredModel = process.env.OPENROUTER_MODEL || "openrouter/free";
-  const models = [...new Set([preferredModel, "openrouter/free"])] ;
+  const models = [...new Set([preferredModel, "openrouter/free"])];
   let lastError = "";
 
   for (const model of models) {
@@ -389,8 +396,274 @@ function getConfig() {
     freeGenerations,
     paidEnabled: Boolean(merchantAddress),
     merchantAddress: merchantAddress ? `${merchantAddress.slice(0, 6)}...${merchantAddress.slice(-6)}` : "",
-    provider: getProvider()
+    provider: getProvider(),
+    telegramBotEnabled: Boolean(telegramBotToken)
   };
+}
+
+function getBotUser(chatId) {
+  const key = String(chatId);
+  if (!botUsers.has(key)) {
+    botUsers.set(key, {
+      chatId: key,
+      credits: freeGenerations,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      lastOrderId: null
+    });
+    saveStore();
+  }
+  return botUsers.get(key);
+}
+
+function buildBotListingInput(text) {
+  const cleanText = cleanInput(text, 900);
+  const firstLine = cleanText.split(/\r?\n/).find(Boolean) || "";
+  return {
+    niche: cleanInput(firstLine.replace(/^[-*\d.\s]+/, ""), 120) || "Товар или услуга",
+    offer: cleanInput(cleanText, 360),
+    audience: "покупатель на Avito или в Telegram",
+    tone: "спокойный и доверительный",
+    platform: "Telegram и Avito"
+  };
+}
+
+function createBotOrder(chatId) {
+  const user = getBotUser(chatId);
+  const orderId = randomUUID().slice(0, 8).toUpperCase();
+  const comment = `AIBOT-${orderId}`;
+  const amountNano = toNano(priceTon);
+  const paymentUrl = `ton://transfer/${merchantAddress}?amount=${amountNano}&text=${encodeURIComponent(comment)}`;
+  const order = {
+    id: orderId,
+    botChatId: String(chatId),
+    comment,
+    amountNano,
+    status: "pending",
+    createdAt: Date.now()
+  };
+  orders.set(orderId, order);
+  user.lastOrderId = orderId;
+  user.updatedAt = Date.now();
+  saveStore();
+  return { order, paymentUrl };
+}
+
+async function telegramApi(method, payload) {
+  if (!telegramBotToken) {
+    return null;
+  }
+
+  const response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/${method}`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Telegram API error ${response.status}: ${await response.text()}`);
+  }
+
+  return response.json();
+}
+
+async function sendTelegramMessage(chatId, text, extra = {}) {
+  const chunks = String(text || "").match(/[\s\S]{1,3900}/g) || [""];
+  for (const chunk of chunks) {
+    await telegramApi("sendMessage", {
+      chat_id: chatId,
+      text: chunk,
+      disable_web_page_preview: true,
+      ...extra
+    });
+  }
+}
+
+function botHelpText(user) {
+  return [
+    "ListingMint AI помогает быстро делать объявления для Avito и Telegram.",
+    "",
+    `Бесплатно доступно: ${freeGenerations} генерация.`,
+    `Пакет: ${generationsPerPayment} генераций за ${priceTon} TON.`,
+    `Сейчас у тебя генераций: ${user.credits}.`,
+    "",
+    "Как пользоваться:",
+    "1. Просто отправь описание товара или услуги.",
+    "2. Я верну заголовок, описание, Telegram-версию, ключевые слова и ответы покупателю.",
+    "",
+    "Команды:",
+    "/credits — проверить баланс",
+    "/buy — купить пакет за TON",
+    "/check — проверить оплату"
+  ].join("\n");
+}
+
+async function handleBotBuy(chatId) {
+  if (!merchantAddress) {
+    await sendTelegramMessage(chatId, "Оплата временно недоступна: не настроен TON-адрес продавца.");
+    return;
+  }
+
+  const { order, paymentUrl } = createBotOrder(chatId);
+  await sendTelegramMessage(chatId, [
+    `Пакет: ${generationsPerPayment} генераций`,
+    `Цена: ${priceTon} TON`,
+    `Комментарий к платежу: ${order.comment}`,
+    "",
+    "Важно: отправь TON именно с этим комментарием, иначе бот не увидит оплату.",
+    "После оплаты нажми /check или отправь:",
+    `/check ${order.id}`
+  ].join("\n"), {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "Оплатить в TON", url: paymentUrl }],
+        [{ text: "Открыть сайт", url: publicBaseUrl }]
+      ]
+    }
+  });
+}
+
+async function handleBotCheck(chatId, requestedOrderId) {
+  const user = getBotUser(chatId);
+  const orderId = String(requestedOrderId || user.lastOrderId || "").trim().toUpperCase();
+  const order = orders.get(orderId);
+
+  if (!order || order.botChatId !== String(chatId)) {
+    await sendTelegramMessage(chatId, "Не нашел заказ. Нажми /buy, чтобы создать новый счет.");
+    return;
+  }
+
+  if (order.status === "paid") {
+    await sendTelegramMessage(chatId, `Этот заказ уже активирован. Баланс: ${user.credits} генераций.`);
+    return;
+  }
+
+  const paid = await checkTonPayment(order);
+  if (!paid) {
+    await sendTelegramMessage(chatId, "Пока не вижу оплату. Подожди 10-30 секунд и отправь /check еще раз.");
+    return;
+  }
+
+  order.status = "paid";
+  user.credits += generationsPerPayment;
+  user.updatedAt = Date.now();
+  saveStore();
+  await sendTelegramMessage(chatId, `Оплата найдена. Добавлено генераций: ${generationsPerPayment}. Баланс: ${user.credits}.`);
+}
+
+async function handleBotText(chatId, text) {
+  const user = getBotUser(chatId);
+  const commandMatch = text.match(/^\/(\w+)(?:\s+(.+))?/);
+
+  if (commandMatch) {
+    const command = commandMatch[1].toLowerCase();
+    const arg = commandMatch[2];
+
+    if (command === "start" || command === "help") {
+      await sendTelegramMessage(chatId, botHelpText(user));
+      return;
+    }
+
+    if (command === "credits") {
+      await sendTelegramMessage(chatId, `Баланс: ${user.credits} генераций.`);
+      return;
+    }
+
+    if (command === "buy") {
+      await handleBotBuy(chatId);
+      return;
+    }
+
+    if (command === "check") {
+      await handleBotCheck(chatId, arg);
+      return;
+    }
+
+    await sendTelegramMessage(chatId, "Не знаю такую команду. Отправь /help.");
+    return;
+  }
+
+  if (user.credits <= 0) {
+    await sendTelegramMessage(chatId, [
+      "Бесплатные генерации закончились.",
+      `Пакет: ${generationsPerPayment} генераций за ${priceTon} TON.`,
+      "Нажми /buy, чтобы получить счет."
+    ].join("\n"));
+    return;
+  }
+
+  const input = buildBotListingInput(text);
+  if (!input.offer) {
+    await sendTelegramMessage(chatId, "Отправь описание товара или услуги одним сообщением.");
+    return;
+  }
+
+  await sendTelegramMessage(chatId, "Генерирую объявление...");
+  const generated = await generateWithProvider(input);
+  user.credits -= 1;
+  user.updatedAt = Date.now();
+  saveStore();
+  await sendTelegramMessage(chatId, `${generated.text}\n\nОсталось генераций: ${user.credits}`);
+}
+
+async function handleTelegramWebhook(req, res) {
+  try {
+    if (telegramWebhookSecret && req.headers["x-telegram-bot-api-secret-token"] !== telegramWebhookSecret) {
+      sendJson(res, 403, { ok: false });
+      return;
+    }
+
+    const update = await readJson(req);
+    const message = update.message || update.edited_message;
+    const chatId = message?.chat?.id;
+    const text = cleanInput(message?.text, 1500);
+
+    sendJson(res, 200, { ok: true });
+
+    if (!chatId || !text) {
+      return;
+    }
+
+    handleBotText(chatId, text).catch((error) => {
+      console.error(`Telegram bot error: ${error.message}`);
+      sendTelegramMessage(chatId, "Не смог обработать сообщение. Попробуй еще раз.").catch(() => {});
+    });
+  } catch (error) {
+    sendJson(res, 500, { ok: false, error: error.message });
+  }
+}
+
+async function setupTelegramBot() {
+  if (!telegramBotToken || !publicBaseUrl.startsWith("https://")) {
+    return;
+  }
+
+  const webhookUrl = `${publicBaseUrl}/telegram/webhook`;
+  const payload = {
+    url: webhookUrl,
+    allowed_updates: ["message", "edited_message"],
+    drop_pending_updates: false
+  };
+
+  if (telegramWebhookSecret) {
+    payload.secret_token = telegramWebhookSecret;
+  }
+
+  try {
+    await telegramApi("setWebhook", payload);
+    await telegramApi("setMyCommands", {
+      commands: [
+        { command: "start", description: "Запустить бота" },
+        { command: "credits", description: "Проверить баланс" },
+        { command: "buy", description: "Купить генерации за TON" },
+        { command: "check", description: "Проверить оплату" },
+        { command: "help", description: "Помощь" }
+      ]
+    });
+    console.log(`Telegram webhook is set: ${webhookUrl}`);
+  } catch (error) {
+    console.error(`Failed to setup Telegram bot: ${error.message}`);
+  }
 }
 
 async function handleSession(_req, res) {
@@ -578,6 +851,23 @@ createServer((req, res) => {
     return;
   }
 
+  if (req.method === "GET" && req.url === "/api/telegram/status") {
+    sendJson(res, 200, {
+      enabled: Boolean(telegramBotToken),
+      webhookPath: "/telegram/webhook",
+      freeGenerations,
+      generationsPerPayment,
+      priceTon,
+      paidEnabled: Boolean(merchantAddress)
+    });
+    return;
+  }
+
+  if (req.method === "POST" && req.url === "/telegram/webhook") {
+    handleTelegramWebhook(req, res);
+    return;
+  }
+
   if (req.method === "POST" && req.url === "/api/order") {
     handleCreateOrder(req, res);
     return;
@@ -601,5 +891,6 @@ createServer((req, res) => {
   res.writeHead(405);
   res.end("Method not allowed");
 }).listen(port, () => {
-  console.log(`AI post generator is running: http://localhost:${port}`);
+  console.log(`ListingMint AI is running: http://localhost:${port}`);
+  setupTelegramBot();
 });
