@@ -11,7 +11,7 @@ services:
       - key: AI_PROVIDER
         value: openrouter
       - key: OPENROUTER_MODEL
-        value: openrouter/free
+        value: qwen/qwen3-next-80b-a3b-instruct:free
       - key: OPENROUTER_API_KEY
         sync: false
       - key: MERCHANT_TON_ADDRESS

@@ -23,26 +23,26 @@ let token = localStorage.getItem("postmint_session");
 let activeOrder = null;
 
 const templates = {
-  channel: {
-    niche: "Платный Telegram-канал",
-    offer: "закрытый канал с готовыми идеями постов и разбором офферов за 0.1 TON",
-    audience: "владельцы небольших Telegram-каналов и эксперты",
-    tone: "деловой",
+  phone: {
+    niche: "Смартфон",
+    offer: "iPhone 14 Pro 256 ГБ, темный, аккуратное состояние, Face ID работает, батарея держит день, коробка и кабель, цена 48 000 рублей, Москва",
+    audience: "человек, который хочет надежный флагман без переплаты за новый",
+    tone: "спокойный и доверительный",
+    platform: "Avito"
+  },
+  clothes: {
+    niche: "Женская одежда",
+    offer: "платье миди, размер S-M, надето 1 раз, плотная ткань, хорошо садится по фигуре, можно примерить, цена 2500 рублей",
+    audience: "девушка, которой нужен аккуратный образ на вечер или мероприятие",
+    tone: "живой и дружелюбный",
     platform: "Telegram"
   },
-  miniapp: {
-    niche: "TON mini app",
-    offer: "мини-приложение, которое генерирует продающие Telegram-посты и принимает оплату в TON",
-    audience: "создатели TON-проектов, каналов и mini app",
-    tone: "дружелюбный",
-    platform: "Telegram Mini App"
-  },
-  course: {
-    niche: "Мини-курс",
-    offer: "короткий практический гайд с шаблонами для запуска первого платного продукта",
-    audience: "новички, которые хотят быстро упаковать свою идею",
-    tone: "премиальный",
-    platform: "Telegram"
+  service: {
+    niche: "Услуга ремонта",
+    offer: "мастер по мелкому ремонту квартир: розетки, полки, смесители, сборка мебели, выезд по городу, оплата после результата",
+    audience: "занятые люди, которым нужно быстро решить бытовую задачу без поиска нескольких мастеров",
+    tone: "короткий и деловой",
+    platform: "Avito"
   }
 };
 
@@ -78,9 +78,10 @@ function updateConfig(config) {
 }
 
 async function initSession() {
+  const config = await fetch("/api/config").then((response) => response.json());
+  updateConfig(config);
+
   if (token) {
-    const config = await fetch("/api/config").then((response) => response.json());
-    updateConfig(config);
     creditsCount.textContent = localStorage.getItem("postmint_credits") || "...";
     return;
   }
@@ -90,7 +91,6 @@ async function initSession() {
   localStorage.setItem("postmint_session", token);
   localStorage.setItem("postmint_credits", session.credits);
   updateCredits(session.credits);
-  updateConfig(session.config);
 }
 
 function fillTemplate(name) {
@@ -147,7 +147,7 @@ form.addEventListener("submit", async (event) => {
     status.textContent = error.message;
   } finally {
     button.disabled = false;
-    button.querySelector("span").textContent = "Сгенерировать пост";
+    button.querySelector("span").textContent = "Сгенерировать объявление";
   }
 });
 

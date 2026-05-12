@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PostMint AI</title>
+    <title>ListingMint AI</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -11,10 +11,10 @@
       <section class="hero">
         <nav class="topbar">
           <div class="brand">
-            <span class="brand-mark">PM</span>
+            <span class="brand-mark">LM</span>
             <div>
-              <strong>PostMint AI</strong>
-              <span>Telegram sales writer</span>
+              <strong>ListingMint AI</strong>
+              <span>Объявления, которые легче продать</span>
             </div>
           </div>
           <div class="credits">
@@ -25,19 +25,20 @@
 
         <div class="hero-grid">
           <div class="hero-copy">
-            <span class="badge">AI-посты для Telegram и TON-проектов</span>
-            <h1>Продающий пост для канала за 30 секунд</h1>
+            <span class="badge">AI для Avito, Telegram и маркетплейсов</span>
+            <h1>Собери сильное объявление за 30 секунд</h1>
             <p>
-              Введи продукт, аудиторию и тон общения. PostMint соберет заголовок,
-              основной текст, призыв к действию и хештеги без долгого брифинга.
+              Введи товар, состояние, цену и преимущества. Сервис выдаст заголовок,
+              полное объявление, короткую версию для Telegram, ключевые слова и ответы
+              на сомнения покупателя.
             </p>
             <div class="hero-actions">
-              <a href="#generator" class="primary-link">Попробовать бесплатно</a>
+              <a href="#generator" class="primary-link">Сделать объявление</a>
               <button type="button" id="heroBuyButton">Купить пакет</button>
             </div>
             <div class="metrics">
-              <div><strong>1</strong><span>пост бесплатно</span></div>
-              <div><strong id="metricPack">10</strong><span>постов в пакете</span></div>
+              <div><strong>1</strong><span>объявление бесплатно</span></div>
+              <div><strong id="metricPack">10</strong><span>генераций в пакете</span></div>
               <div><strong id="metricPrice">0.1</strong><span>TON за пакет</span></div>
             </div>
           </div>
@@ -48,17 +49,18 @@
                 <span></span><span></span><span></span>
               </div>
               <div class="preview-content">
-                <span class="eyebrow">Пример поста</span>
-                <h2>Как быстро объяснить ценность продукта</h2>
+                <span class="eyebrow">Пример объявления</span>
+                <h2>iPhone 14 Pro 256 ГБ, аккуратное состояние</h2>
                 <p>
-                  Если подписчик не понимает пользу с первых строк, он пролистывает.
-                  PostMint превращает оффер в понятный Telegram-пост: проблема,
-                  решение, выгода и следующий шаг.
+                  Подойдет тем, кто хочет флагман без переплаты за новый. Корпус без
+                  критичных следов, Face ID работает, батарея держит день. В комплекте
+                  кабель и коробка. Можно проверить при встрече.
                 </p>
                 <div class="preview-tags">
-                  <span>#telegram</span>
-                  <span>#ton</span>
-                  <span>#sales</span>
+                  <span>заголовок</span>
+                  <span>описание</span>
+                  <span>telegram-анонс</span>
+                  <span>ключевые слова</span>
                 </div>
               </div>
             </div>
@@ -78,20 +80,20 @@
       <section class="section">
         <div class="section-head">
           <span class="eyebrow">Быстрый старт</span>
-          <h2>Выбери сценарий или заполни вручную</h2>
+          <h2>Выбери готовый сценарий или заполни форму вручную</h2>
         </div>
         <div class="template-grid">
-          <button type="button" class="template-card" data-template="channel">
-            <strong>Платный канал</strong>
-            <span>Пост для продажи подписки, клуба или закрытого чата.</span>
+          <button type="button" class="template-card" data-template="phone">
+            <strong>Смартфон или техника</strong>
+            <span>Описание состояния, комплекта, проверки и причины цены без лишней воды.</span>
           </button>
-          <button type="button" class="template-card" data-template="miniapp">
-            <strong>TON mini app</strong>
-            <span>Анонс приложения, функции, токена или платного доступа.</span>
+          <button type="button" class="template-card" data-template="clothes">
+            <strong>Одежда и аксессуары</strong>
+            <span>Размер, состояние, посадка, материал и короткий текст для сторис или Telegram.</span>
           </button>
-          <button type="button" class="template-card" data-template="course">
-            <strong>Мини-курс</strong>
-            <span>Продажа гайда, консультации, обучения или чеклиста.</span>
+          <button type="button" class="template-card" data-template="service">
+            <strong>Услуга или мастер</strong>
+            <span>Упаковка услуги: кому подходит, что входит, почему стоит обратиться сейчас.</span>
           </button>
         </div>
       </section>
@@ -100,47 +102,48 @@
         <div class="panel form-panel">
           <div class="panel-head">
             <span class="eyebrow">Генератор</span>
-            <h2>Опиши оффер</h2>
+            <h2>Опиши товар или услугу</h2>
           </div>
           <form id="generatorForm">
             <label>
-              Ниша
-              <input name="niche" maxlength="120" placeholder="TON mini app, обучение, салон, канал" required />
+              Категория
+              <input name="niche" maxlength="120" placeholder="iPhone, ноутбук, платье, ремонт, репетитор" required />
             </label>
 
             <label>
               Что продаем
-              <textarea name="offer" maxlength="280" placeholder="Опиши продукт, цену, бонус или результат" required></textarea>
+              <textarea name="offer" maxlength="360" placeholder="Название, состояние, цена, комплект, город, важные плюсы" required></textarea>
             </label>
 
             <label>
               Для кого
-              <input name="audience" maxlength="180" placeholder="Владельцы каналов, новички в крипте, предприниматели" />
+              <input name="audience" maxlength="180" placeholder="Покупатель б/у техники, родители школьника, владелец квартиры" />
             </label>
 
             <div class="row">
               <label>
-                Тон
+                Стиль
                 <select name="tone">
-                  <option>деловой</option>
-                  <option>дружелюбный</option>
-                  <option>дерзкий</option>
+                  <option>спокойный и доверительный</option>
+                  <option>короткий и деловой</option>
                   <option>премиальный</option>
+                  <option>живой и дружелюбный</option>
                 </select>
               </label>
 
               <label>
                 Площадка
                 <select name="platform">
+                  <option>Avito</option>
                   <option>Telegram</option>
-                  <option>Telegram Mini App</option>
-                  <option>TON community</option>
+                  <option>Юла</option>
+                  <option>маркетплейс</option>
                 </select>
               </label>
             </div>
 
             <button type="submit" id="generateButton">
-              <span>Сгенерировать пост</span>
+              <span>Сгенерировать объявление</span>
             </button>
           </form>
         </div>
@@ -149,54 +152,54 @@
           <div class="output-head">
             <div>
               <span class="eyebrow">Результат</span>
-              <h2>Готовый текст</h2>
+              <h2>Готовый комплект текста</h2>
             </div>
             <button type="button" id="copyButton" aria-label="Скопировать результат">Copy</button>
           </div>
 
-          <pre id="result">Заполни форму и нажми «Сгенерировать пост».</pre>
+          <pre id="result">Заполни форму и нажми «Сгенерировать объявление».</pre>
           <p id="status" class="status"></p>
         </div>
       </section>
 
       <section class="section">
         <div class="section-head">
-          <span class="eyebrow">Почему удобно</span>
-          <h2>Не заменяет маркетолога, но ускоряет первый черновик</h2>
+          <span class="eyebrow">Что получает пользователь</span>
+          <h2>Не просто красивый текст, а готовая упаковка продажи</h2>
         </div>
         <div class="benefit-grid">
           <article>
-            <strong>Структура вместо хаоса</strong>
-            <p>Заголовок, пост, CTA и хештеги сразу в одном ответе.</p>
+            <strong>Заголовок и описание</strong>
+            <p>Можно сразу вставить в объявление, карточку товара или пост в Telegram.</p>
           </article>
           <article>
-            <strong>Подходит для Telegram</strong>
-            <p>Тексты короткие, прямые и без длинных лендинговых блоков.</p>
+            <strong>Ответы на сомнения</strong>
+            <p>AI заранее формулирует доверительные ответы про состояние, цену, проверку и доставку.</p>
           </article>
           <article>
-            <strong>Оплата в TON</strong>
-            <p>Пакет генераций покупается прямо через криптокошелек.</p>
+            <strong>Ключевые слова</strong>
+            <p>Помогает покупателям быстрее найти объявление внутри площадки.</p>
           </article>
         </div>
       </section>
 
       <section class="section">
         <div class="section-head">
-          <span class="eyebrow">Демо-отзывы</span>
-          <h2>Примеры того, как пользователи могут описывать пользу</h2>
+          <span class="eyebrow">Демо-примеры</span>
+          <h2>Как это может быть полезно разным продавцам</h2>
         </div>
         <div class="review-grid">
           <article>
-            <p>«Собрал анонс платного канала за пару минут. Дальше только поправил факты и отправил в отложку.»</p>
-            <span>Владелец Telegram-канала</span>
+            <p>«Сфоткал товар, описал состояние, получил нормальный текст без ощущения дешевого спама.»</p>
+            <span>Частный продавец техники</span>
           </article>
           <article>
-            <p>«Удобно быстро проверить несколько углов подачи: деловой, дружелюбный и более смелый вариант.»</p>
-            <span>Автор mini app</span>
+            <p>«Удобно быстро собрать разные версии: для Avito, Telegram-поста и короткой рассылки.»</p>
+            <span>Владелец небольшого магазина</span>
           </article>
           <article>
-            <p>«Не нужно начинать с пустого листа. Есть скелет поста, CTA и хештеги, которые можно допилить.»</p>
-            <span>Маркетолог проекта</span>
+            <p>«Помогает не забыть важное: комплект, проверку, город, доставку и понятный призыв написать.»</p>
+            <span>Продавец услуг</span>
           </article>
         </div>
       </section>

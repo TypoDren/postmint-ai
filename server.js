@@ -115,47 +115,61 @@ async function saveStore() {
 
 function buildPrompt({ niche, offer, audience, tone, platform }) {
   return [
-    "Ты пишешь короткие продающие Telegram-посты на русском языке.",
-    "Задача: дать готовый текст, который можно сразу опубликовать.",
-    "Не обещай гарантированный доход, не используй агрессивный скам-стиль.",
-    "Формат ответа:",
-    "1. Заголовок",
-    "2. Пост до 900 символов",
-    "3. 3 коротких CTA",
-    "4. 5 хештегов",
+    "Write a sales listing in Russian for Avito, Telegram, Yula, or a marketplace.",
+    "The user needs a ready-to-use listing package, not a generic marketing article.",
+    "Be specific, honest, and practical. Do not invent specs that are not present in the input.",
+    "Strict rule: if delivery, warranty, defects, accessories, battery, discount, reservation, or fixed price are not explicitly mentioned, do not mention them.",
+    "Never write phrases like 'no hidden defects', 'price is fixed', 'delivery is available', 'used carefully', or 'can reserve' unless the user provided that fact.",
+    "For missing facts, use neutral wording such as 'details can be clarified in chat'.",
+    "Do not promise guaranteed income. If information is missing, phrase it carefully.",
+    "Return only Russian text in this exact structure:",
+    "1. Strong title up to 70 characters",
+    "2. Short description up to 250 characters",
+    "3. Full listing up to 1100 characters",
+    "4. Telegram post version",
+    "5. 5-8 search keywords",
+    "6. Answers to 3 common buyer objections",
+    "7. Short CTA",
     "",
-    `Ниша: ${niche}`,
-    `Оффер: ${offer}`,
-    `Аудитория: ${audience}`,
-    `Тон: ${tone}`,
-    `Площадка: ${platform}`
+    "Category: " + niche,
+    "Item or service: " + offer,
+    "Buyer: " + audience,
+    "Tone: " + tone,
+    "Platform: " + platform
+  ].join("\n");
+}
+
+function demoGeneration({ niche, offer, audience, tone }) {
+  return [
+    "1. Сильный заголовок до 70 символов",
+    (niche || "Товар") + ": честное объявление с понятными деталями",
+    "",
+    "2. Короткое описание до 250 символов",
+    "Продаю: " + (offer || "товар в хорошем состоянии") + ". Подойдет для: " + (audience || "покупателя, которому важны понятные условия") + ". Можно задать вопросы и договориться о проверке.",
+    "",
+    "3. Полное объявление до 1100 символов",
+    "Продаю " + (offer || "товар") + ". Описание сделано спокойно и без лишних обещаний: указаны основные детали, состояние и условия. Если важно уточнить комплект, доставку, проверку или дополнительные фото, лучше обсудить это в переписке до покупки.",
+    "",
+    "Для кого: " + (audience || "для покупателя, который хочет понятные условия без долгой переписки") + ". Стиль: " + (tone || "спокойный и доверительный") + ".",
+    "",
+    "4. Версия для Telegram-поста",
+    "Есть хороший вариант: " + (offer || "товар/услуга") + ". Коротко, честно и без завышенных обещаний. Напишите в личку — скину детали, фото и отвечу на вопросы.",
+    "",
+    "5. Ключевые слова для поиска",
+    "купить, продажа, хорошее состояние, проверка, доставка, объявление",
+    "",
+    "6. Ответы на сомнения покупателя",
+    "- Почему такая цена? Цена указана с учетом состояния, рынка и условий продажи.",
+    "- Можно проверить? Да, детали проверки лучше согласовать до встречи или оплаты.",
+    "- Есть ли нюансы? Все важные моменты можно уточнить в переписке заранее.",
+    "",
+    "7. Короткий CTA",
+    "Напишите, если хотите уточнить детали или забронировать."
   ].join("\n");
 }
 
 function getProvider() {
   return String(process.env.AI_PROVIDER || "openrouter").trim().toLowerCase();
-}
-
-function demoGeneration({ niche, offer, audience, tone }) {
-  return [
-    "1. Заголовок",
-    `Как получить больше заявок в нише "${niche || "ваш продукт"}" без сложной воронки`,
-    "",
-    "2. Пост до 900 символов",
-    `Если у вас есть ${offer || "полезный продукт"}, но люди не понимают его ценность с первых секунд, проблема часто не в продукте, а в подаче.`,
-    "",
-    `Мы сделали простой формат для ${audience || "клиентов"}, где оффер объясняется человеческим языком: что человек получает, почему это важно сейчас и какой следующий шаг сделать.`,
-    "",
-    `Тон: ${tone || "деловой"}. Без лишнего шума, без обещаний легких денег, только понятная польза и быстрый вход.`,
-    "",
-    "3. CTA",
-    "- Напишите «старт», если хотите пример под вашу нишу.",
-    "- Заберите тестовый вариант сегодня.",
-    "- Оставьте заявку, покажем первый результат.",
-    "",
-    "4. Хештеги",
-    "#telegram #продажи #маркетинг #ai #ton"
-  ].join("\n");
 }
 
 async function generateOpenAI(input) {
@@ -202,34 +216,50 @@ async function generateOpenRouter(input) {
     return { text: demoGeneration(input), demo: true, warning: "OPENROUTER_API_KEY is missing. Demo text was returned instead." };
   }
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "authorization": `Bearer ${apiKey}`,
-      "content-type": "application/json",
-      "http-referer": publicBaseUrl,
-      "x-title": "TON AI Post Generator"
-    },
-    body: JSON.stringify({
-      model: process.env.OPENROUTER_MODEL || "openrouter/free",
-      messages: [
-        { role: "system", content: "Ты сильный direct-response копирайтер. Пиши конкретно, этично и без воды." },
-        { role: "user", content: buildPrompt(input) }
-      ],
-      max_tokens: 900
-    })
-  });
+  const preferredModel = process.env.OPENROUTER_MODEL || "openrouter/free";
+  const models = [...new Set([preferredModel, "openrouter/free"])] ;
+  let lastError = "";
 
-  if (!response.ok) {
-    throw new Error(`OpenRouter API error ${response.status}: ${await response.text()}`);
+  for (const model of models) {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "authorization": `Bearer ${apiKey}`,
+        "content-type": "application/json",
+        "http-referer": publicBaseUrl,
+        "x-title": "ListingMint AI"
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: "You are a careful Russian sales listing copywriter. Use only facts from the input. Never invent specs, defects, accessories, delivery, warranty, discounts, reservation, fixed price, dates, bonuses, or guarantees." },
+          { role: "user", content: buildPrompt(input) }
+        ],
+        temperature: 0.2,
+        max_tokens: 900
+      })
+    });
+
+    if (!response.ok) {
+      lastError = `OpenRouter API error ${response.status}: ${await response.text()}`;
+      continue;
+    }
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content?.trim();
+    if (!text) {
+      lastError = "OpenRouter returned an empty model response.";
+      continue;
+    }
+
+    return {
+      text,
+      demo: false,
+      provider: model === preferredModel ? "openrouter" : "openrouter/free"
+    };
   }
 
-  const data = await response.json();
-  return {
-    text: data.choices?.[0]?.message?.content?.trim() || "Не удалось прочитать ответ модели.",
-    demo: false,
-    provider: "openrouter"
-  };
+  return { text: demoGeneration(input), demo: true, warning: lastError || "OpenRouter is unavailable. Demo text was returned instead." };
 }
 
 async function generateGroq(input) {
@@ -323,19 +353,33 @@ async function generateOllama(input) {
 }
 
 async function generateWithProvider(input) {
-  switch (getProvider()) {
-    case "openai":
-      return generateOpenAI(input);
-    case "groq":
-      return generateGroq(input);
-    case "gemini":
-      return generateGemini(input);
-    case "ollama":
-      return generateOllama(input);
-    case "openrouter":
-    default:
-      return generateOpenRouter(input);
-  }
+  const providerCall = async () => {
+    switch (getProvider()) {
+      case "openai":
+        return generateOpenAI(input);
+      case "groq":
+        return generateGroq(input);
+      case "gemini":
+        return generateGemini(input);
+      case "ollama":
+        return generateOllama(input);
+      case "openrouter":
+      default:
+        return generateOpenRouter(input);
+    }
+  };
+
+  const timeout = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        text: demoGeneration(input),
+        demo: true,
+        warning: "AI provider timeout. Demo text was returned instead."
+      });
+    }, 25_000);
+  });
+
+  return Promise.race([providerCall(), timeout]);
 }
 
 function getConfig() {
@@ -488,7 +532,7 @@ async function handleGenerate(req, res) {
     };
 
     if (!input.niche || !input.offer) {
-      sendJson(res, 400, { error: "Заполни нишу и оффер." });
+      sendJson(res, 400, { error: "Заполни категорию и описание товара." });
       return;
     }
 
